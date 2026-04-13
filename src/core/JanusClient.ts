@@ -12,6 +12,7 @@ import type { AppConfig } from '../config/settings.ts';
 declare const Janus: {
   new(options: JanusConstructorOptions): JanusInstance;
   init(options: JanusInitOptions): void;
+  useDefaultDependencies(deps?: Record<string, unknown>): Record<string, unknown>;
   isWebrtcSupported(): boolean;
   randomString(length: number): string;
 };
@@ -51,7 +52,7 @@ export class JanusClient {
     return new Promise((resolve) => {
       Janus.init({
         debug: false,
-        dependencies: { adapter },
+        dependencies: Janus.useDefaultDependencies({ adapter }),
         callback: () => resolve(),
       });
     });
