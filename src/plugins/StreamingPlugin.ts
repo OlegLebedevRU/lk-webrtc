@@ -245,10 +245,12 @@ export class StreamingPlugin {
         this.status = 'stopped';
         this.callbacks.onStreamStopped?.();
       }
-      return;
+      // Do NOT return here: when Janus responds to a 'watch' request it sends
+      // streaming:"event" with result.status:"preparing" AND a JSEP SDP offer.
+      // Falling through allows the JSEP to be processed below.
     }
 
-    // Handle SDP offer from the plugin
+    // Handle SDP offer from the plugin (e.g. in response to a 'watch' request)
     if (jsep) {
       const tracks: JanusTrackOption[] = [
         { type: 'audio', recv: true },
