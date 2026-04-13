@@ -104,7 +104,7 @@ export class MediaRenderer {
         : document.createElement('video');
     element.className = 'w-100 rounded';
     element.autoplay = true;
-    element.controls = kind === 'audio';
+    element.controls = true;
     element.muted = this.muted;
 
     if (element instanceof HTMLVideoElement) {
