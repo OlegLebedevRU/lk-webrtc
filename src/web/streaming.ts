@@ -5,7 +5,7 @@ import {
   getJanusConfig,
   getSipCredentials,
 } from '../index.ts';
-import type { JanusJsep, StreamInfo } from '../index.ts';
+import type { StreamInfo } from '../index.ts';
 import { describeError, MediaRenderer, queryRequired, setAlert, setButtonState } from './common.ts';
 
 const appStatus = queryRequired<HTMLElement>('#app-status');

@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && node -e \"require('node:fs').copyFileSync('janus.js', 'dist/janus.js')\"",
     "preview": "vite preview",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit"

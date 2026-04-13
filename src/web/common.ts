@@ -98,12 +98,18 @@ export class MediaRenderer {
     const body = document.createElement('div');
     body.className = 'card-body';
 
-    const element = document.createElement(kind === 'audio' ? 'audio' : 'video');
+    const element =
+      kind === 'audio'
+        ? document.createElement('audio')
+        : document.createElement('video');
     element.className = 'w-100 rounded';
     element.autoplay = true;
-    element.playsInline = true;
     element.controls = kind === 'audio';
     element.muted = this.muted;
+
+    if (element instanceof HTMLVideoElement) {
+      element.playsInline = true;
+    }
 
     body.appendChild(element);
     card.append(header, body);
