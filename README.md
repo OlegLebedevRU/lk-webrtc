@@ -16,7 +16,7 @@
 
 | Режим | Описание |
 |---|---|
-| **Legacy** | Оригинальные монолитные файлы (`streaming.html`, `sip.html`). Работают без сборки, «из коробки». |
+| **Legacy** | Оригинальные монолитные файлы (`index.html` → `streaming.html`, `sip.html`). Работают без сборки, «из коробки». |
 | **Новый (TypeScript)** | Модульная архитектура в `src/`, совместимая с Vite и React Native. |
 
 ---
@@ -42,6 +42,7 @@ lk-webrtc/
 │   │   └── helpers.ts          # Утилиты: escapeXml, generateOpaqueId, debounce...
 │   └── index.ts                # Единая точка экспорта
 │
+├── index.html                  # Стартовая страница: сразу открывает Streaming + SIP
 ├── streaming.html              # Legacy UI — стриминг + SIP (jQuery)
 ├── streaming.js                # Legacy логика стриминга (монолит)
 ├── sip.html                    # Legacy UI — SIP Gateway Demo
@@ -65,6 +66,7 @@ lk-webrtc/
 Просто откройте в браузере:
 
 ```
+index.html       — стартовая страница, сразу открывает Streaming + SIP
 streaming.html   — просмотр видеопотоков + SIP
 sip.html         — только SIP Gateway Demo
 ```
