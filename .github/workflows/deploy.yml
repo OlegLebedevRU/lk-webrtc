@@ -27,16 +27,12 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Configure AWS credentials for Yandex S3
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.YANDEX_CLOUD_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.YANDEX_CLOUD_SECRET_ACCESS_KEY }}
-          aws-region: ru-central1
-          aws-session-token: ${{ secrets.YANDEX_CLOUD_SESSION_TOKEN }} # опционально
-
       - name: Upload files to Yandex Object Storage
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.YANDEX_CLOUD_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.YANDEX_CLOUD_SECRET_ACCESS_KEY }}
         run: |
           aws s3 sync ./dist s3://${{ secrets.BUCKET }} \
             --endpoint-url https://storage.yandexcloud.net \
-            --delete
+            --delete \
+            --region ru-central1
