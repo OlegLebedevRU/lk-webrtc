@@ -83,7 +83,7 @@ async function bootstrap(): Promise<void> {
       }
 
       try {
-        await sipPlugin?.answer(jsep, useVideoCheckbox.checked);
+        await sipPlugin?.answer(jsep, !jsep, useVideoCheckbox.checked);
         setAlert(callStatus, `Вызов от ${caller} принят.`, 'success');
       } catch (error) {
         setAlert(callStatus, describeError(error), 'danger');

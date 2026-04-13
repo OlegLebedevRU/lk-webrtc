@@ -129,7 +129,7 @@ async function init(): Promise<void> {
       }
 
       try {
-        await sipPlugin?.answer(jsep, false);
+        await sipPlugin?.answer(jsep, !jsep, false);
         setAlert(callStatus, `Вызов от ${caller} принят.`, 'success');
       } catch (error) {
         setAlert(callStatus, describeError(error), 'danger');

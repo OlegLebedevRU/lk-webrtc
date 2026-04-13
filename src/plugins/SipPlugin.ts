@@ -127,10 +127,10 @@ export class SipPlugin {
   /**
    * Answers an incoming SIP call.
    */
-  async answer(jsep?: JanusJsep, useVideo = false): Promise<void> {
+  async answer(jsep?: JanusJsep, offerless = false, useVideo = false): Promise<void> {
     this.ensureHandle();
 
-    if (!jsep) {
+    if (offerless || !jsep) {
       const tracks: JanusTrackOption[] = [{ type: 'audio', capture: true, recv: true }];
       if (useVideo) {
         tracks.push({ type: 'video', capture: true, recv: true });
