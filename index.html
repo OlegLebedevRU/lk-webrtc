@@ -1,20 +1,78 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Leo4 WebRTC</title>
-<link rel="icon" href="favicon.ico"/>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leo4 WebRTC — Streaming + SIP</title>
+  <link rel="icon" href="./favicon.ico">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/5.3.2/cerulean/bootstrap.min.css">
+  <link rel="stylesheet" href="./demo.css">
+  <script src="./janus.js"></script>
+  <script type="module" src="./src/web/streaming.ts"></script>
 </head>
 <body>
-<main style="max-width: 720px; margin: 4rem auto; font-family: sans-serif; line-height: 1.5; padding: 0 1rem;">
-  <h1>Leo4 WebRTC</h1>
-  <p>Проект переведен на новую TypeScript/Vite-архитектуру для сборки и деплоя в S3.</p>
-  <ul>
-    <li><a href="streaming.html">Streaming + SIP</a></li>
-    <li><a href="sip.html">SIP Gateway</a></li>
-  </ul>
-  <p>Если нужен прежний переход сразу в комбинированный режим, откройте <a href="streaming.html">streaming.html</a>.</p>
-</main>
+  <main class="container py-4">
+    <div class="mb-4">
+      <h1 class="mb-1">Streaming + SIP</h1>
+      <p class="text-muted mb-0">Новый web-слой на TypeScript-модулях для статического развертывания на S3.</p>
+    </div>
+
+    <div id="app-status" class="mb-3"></div>
+
+    <div class="card shadow-sm mb-4">
+      <div class="card-header">Видео с камеры</div>
+      <div class="card-body">
+        <div id="stream-media" class="row g-3"></div>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <section class="col-12 col-xl-6">
+        <div class="card shadow-sm mb-4">
+          <div class="card-header">Потоки</div>
+          <div class="card-body">
+            <div id="stream-status" class="mb-3"></div>
+            <label class="form-label" for="stream-select">Доступные потоки</label>
+            <div class="input-group mb-3">
+              <select class="form-select" id="stream-select"></select>
+              <button class="btn btn-outline-secondary" type="button" id="refresh-streams">Обновить</button>
+            </div>
+            <button class="btn btn-primary w-100" type="button" id="watch-stream">Смотреть поток</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="col-12 col-xl-6">
+        <div class="card shadow-sm mb-4">
+          <div class="card-header">SIP</div>
+          <div class="card-body">
+            <div id="sip-status" class="mb-3"></div>
+            <label class="form-label" for="sip-username">Учетная запись</label>
+            <input class="form-control mb-3" id="sip-username" type="text" disabled>
+            <label class="form-label" for="peer">Кому звонить</label>
+            <div class="input-group mb-3">
+              <input class="form-control" id="peer" type="text" placeholder="sip:1000@example.com">
+              <button class="btn btn-success" type="button" id="call">Позвонить</button>
+            </div>
+            <div id="call-status"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="card shadow-sm mt-4">
+      <div class="card-header">
+        <a class="text-decoration-none" data-bs-toggle="collapse" href="#stream-metadata-collapse" role="button" aria-expanded="false" aria-controls="stream-metadata-collapse">
+          Метаданные потока ▾
+        </a>
+      </div>
+      <div class="collapse" id="stream-metadata-collapse">
+        <div class="card-body">
+          <pre id="stream-metadata" class="mb-0 small"></pre>
+        </div>
+      </div>
+    </div>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

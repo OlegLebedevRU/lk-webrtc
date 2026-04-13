@@ -17,22 +17,12 @@ const streamMetadata = queryRequired<HTMLElement>('#stream-metadata');
 const sipStatus = queryRequired<HTMLElement>('#sip-status');
 const callStatus = queryRequired<HTMLElement>('#call-status');
 const sipUsername = queryRequired<HTMLInputElement>('#sip-username');
-const useVideoCheckbox = queryRequired<HTMLInputElement>('#sip-use-video');
 const peerInput = queryRequired<HTMLInputElement>('#peer');
 const callButton = queryRequired<HTMLButtonElement>('#call');
 
 const streamRenderer = new MediaRenderer(
   queryRequired<HTMLElement>('#stream-media'),
   'После запуска здесь появятся видео- и аудиотреки потока.',
-);
-const sipLocalRenderer = new MediaRenderer(
-  queryRequired<HTMLElement>('#sip-local-media'),
-  'Локальные SIP-треки пока не созданы.',
-  true,
-);
-const sipRemoteRenderer = new MediaRenderer(
-  queryRequired<HTMLElement>('#sip-remote-media'),
-  'Во время звонка здесь появятся удаленные SIP-треки.',
 );
 
 let streamingPlugin: StreamingPlugin | null = null;
@@ -130,7 +120,7 @@ async function init(): Promise<void> {
       }
 
       try {
-        await sipPlugin?.answer(jsep, !jsep, useVideoCheckbox.checked);
+        await sipPlugin?.answer(jsep, !jsep, false);
         setAlert(callStatus, `Вызов от ${caller} принят.`, 'success');
       } catch (error) {
         setAlert(callStatus, describeError(error), 'danger');
@@ -147,21 +137,17 @@ async function init(): Promise<void> {
     onCallHangup: (_code, reason) => {
       inCall = false;
       updateCallButton();
-      sipLocalRenderer.clear();
-      sipRemoteRenderer.clear();
       setAlert(callStatus, reason || 'Звонок завершен.', 'warning');
     },
-    onLocalTrack: (track, on) => {
-      sipLocalRenderer.update(track, `local-${track.id}`, on, `Локальный ${track.kind}`);
+    onLocalTrack: () => {
+      // Local SIP media display removed
     },
-    onRemoteTrack: (track, mid, on) => {
-      sipRemoteRenderer.update(track, `remote-${mid}-${track.kind}`, on, `Удаленный ${track.kind}`);
+    onRemoteTrack: () => {
+      // Remote SIP media display removed
     },
     onCleanup: () => {
       inCall = false;
       updateCallButton();
-      sipLocalRenderer.clear();
-      sipRemoteRenderer.clear();
     },
     onError: (error) => setAlert(callStatus, error, 'danger'),
   });
@@ -223,7 +209,7 @@ callButton.addEventListener('click', async () => {
   }
 
   try {
-    await sipPlugin.call(uri, useVideoCheckbox.checked);
+    await sipPlugin.call(uri, false);
   } catch (error) {
     setAlert(callStatus, describeError(error), 'danger');
   }
