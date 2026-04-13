@@ -84,6 +84,7 @@ export class StreamingPlugin {
     this.ensureHandle();
     const request: StreamingWatchRequest = { request: 'watch', id: streamId };
     this.handle!.send({ message: request });
+    this.selectedStream = this.streams.find((stream) => stream.id === streamId) ?? null;
     this.status = 'watching';
   }
 
@@ -125,6 +126,7 @@ export class StreamingPlugin {
     this.ensureHandle();
     const request: StreamingSwitchRequest = { request: 'switch', id: streamId };
     this.handle!.send({ message: request });
+    this.selectedStream = this.streams.find((stream) => stream.id === streamId) ?? null;
   }
 
   /**

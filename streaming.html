@@ -1,145 +1,92 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html lang="ru">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<title>Leo4 WebRTC Server (multistream): Streaming+SIP Demo</title>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/8.2.3/adapter.min.js" ></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" ></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.2/umd/popper.min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.2/js/bootstrap.min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/6.0.0/bootbox.min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.js"></script>
-
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery.blockUI/2.70/jquery.blockUI.min.js" ></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.6.0/js/md5.min.js"></script>
-<script type="text/javascript" src="settings.js" ></script>
-<script type="text/javascript" src="janus.js" ></script>
-<script type="text/javascript" src="streaming.js"></script>
-<script>
-	$(function() {
-		$(".fixed-top").load("nop.html", function() {
-			$(".fixed-top li.dropdown").addClass("active");
-			$(".fixed-top a[href='streaming.html']").addClass("active");
-		});
-		$(".footer").load("nop.html");
-	});
-</script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/5.3.2/cerulean/bootstrap.min.css" type="text/css"/>
-<link rel="stylesheet" href="demo.css" type="text/css"/>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" type="text/css"/>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.css"/>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leo4 WebRTC — Streaming + SIP</title>
+  <link rel="icon" href="./favicon.ico">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/5.3.2/cerulean/bootstrap.min.css">
+  <link rel="stylesheet" href="./demo.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/8.2.3/adapter.min.js"></script>
+  <script src="./janus.js"></script>
+  <script type="module" src="./src/web/streaming.ts"></script>
 </head>
 <body>
+  <main class="container py-4">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+      <div>
+        <h1 class="mb-1">Streaming + SIP</h1>
+        <p class="text-muted mb-0">Новый web-слой на TypeScript-модулях для статического деплоя на S3.</p>
+      </div>
+      <div class="d-flex gap-2">
+        <a class="btn btn-outline-primary" href="./index.html">Главная</a>
+        <a class="btn btn-outline-primary" href="./sip.html">SIP</a>
+      </div>
+    </div>
 
+    <div id="app-status" class="mb-3"></div>
 
-<div class="navbar navbar-expand-lg fixed-top navbar-dark bg-primary">
-</div>
+    <div class="row g-4">
+      <section class="col-12 col-xl-5">
+        <div class="card shadow-sm mb-4">
+          <div class="card-header">Потоки</div>
+          <div class="card-body">
+            <div id="stream-status" class="mb-3"></div>
+            <label class="form-label" for="stream-select">Доступные потоки</label>
+            <div class="input-group mb-3">
+              <select class="form-select" id="stream-select"></select>
+              <button class="btn btn-outline-secondary" type="button" id="refresh-streams">Обновить</button>
+            </div>
+            <button class="btn btn-primary w-100" type="button" id="watch-stream">Смотреть поток</button>
+          </div>
+        </div>
 
-<div class="container">
-	<div class="row">
-		<div class="col-md-12">
-			<div class="pb-2 mt-4 mb-2 border-bottom">
-				<h1>Demo: Streaming + SIP
-					<!-- <button class="btn btn-secondary" autocomplete="off" id="start">Start</button> -->
-				</h1>
-			</div>
-			<!-- <div class="container" id="details">
-				<div class="row">
-					<div class="alert alert-primary mt-2 mb-5">
-						Want to learn more about the <strong>Streaming</strong> plugin?
-					</div>
-				</div>
-				<div class="row">
-					<div class="col-md-12">
-						<h3>Demo details</h3>
-						<p>This demo showcases the functionality provided by the Streaming plugin.
-						In particular, it provides three different streaming approaches, namely:</p>
-						
-						<p>Press the <code>Start</code> button above to launch the demo.</p>
-					</div>
-				</div>
-			</div> -->
-			<div class="container mt-4 hide" id="streams">
-				<div class="row">
-					<div class="col-md-6">
-						<div class="card w-100">
-							<div class="card-header">
-								<span class="card-title">Streams <i id="update-streams" class="fa-solid fa-rotate" title="Update list of streams" style="cursor: pointer;"></i></span>
-							</div>
-							<div class="card-body" id="list">
-								<div class="btn-group btn-group-sm">
-									<button class="btn btn-primary" autocomplete="off" id="watch">Watch</button>
-									<div class="btn-group btn-group-sm">
-										<button autocomplete="off" id="streamset" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown">
-											Streams list
-										</button>
-										<ul id="streamslist" class="dropdown-menu" role="menu" style="max-height: 300px; overflow: auto;">
-										</ul>
-									</div>
-								</div>
-							</div>
-						</div>
-						<div class="card mt-4 w-100 hide" id="info">
-							<div class="card-header">
-								<span class="card-title"><i class="fa-solid fa-circle-info"></i> Metadata</span>
-							</div>
-							<div class="card-body">
-								<pre id="metadata" class="card card-body bg-gray mt-3"></pre>
-							</div>
-						</div>
-						<div class="card mt-4 w-100" id="info">
-							<div class="card-header">
-								<span class="card-title"><i class="fa-solid fa-circle-info"></i> SIP</span>
-							</div>
-							<div class="card-body">
-								<div class="input-group mt-1 mb-1">
-									<span class="input-group-text"><i class="fa-solid fa-user"></i></span>
-										<input disabled class="form-control" type="text" placeholder="sip:6004@87.242.100.34" autocomplete="off" id="username"  />
-							<!-- <button id="addhelper" class="btn btn-xs btn-info hide" title="Add a new line">
-								<i class="fa-solid fa-plus"></i>
-							</button> -->
-								</div>
-							</div>
-						</div>
-						<div class="col-md-6 container invisible" id="phone">
-							<div class="input-group mt-1 mb-1">
-								<span class="input-group-text"><i class="fa-solid fa-phone"></i></span>
-								<input class="form-control" type="text" placeholder="SIP URI to call (e.g., sip:1000@example.com)" autocomplete="off" id="peer" onkeypress="return checkEnter(this, event);" />
-							</div>
-							<button class="btn btn-success mb-1" autocomplete="off" id="call">Call</button> 
-						</div>
-					</div>
-					<div class="col-md-6" id="videos">
-					</div>
-				</div>
-				<div id="videos" class="row mt-2 mb-2 hide">
-					<div class="col-md-6">
-						<div class="card">
-							<div class="card-header">
-								<span class="card-title">You</span>
-							</div>
-							<div class="card-body" id="videoleft"></div>
-						</div>
-					</div>
-					<div class="col-md-6">
-						<div class="card">
-							<div class="card-header">
-								<span class="card-title">Remote UA</span>
-							</div>
-							<div class="card-body" id="videoright"></div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+        <div class="card shadow-sm mb-4">
+          <div class="card-header">Метаданные потока</div>
+          <div class="card-body">
+            <pre id="stream-metadata" class="mb-0 small"></pre>
+          </div>
+        </div>
 
-	<hr>
-	<div class="footer">
-	</div>
-</div>
+        <div class="card shadow-sm">
+          <div class="card-header">SIP</div>
+          <div class="card-body">
+            <div id="sip-status" class="mb-3"></div>
+            <label class="form-label" for="sip-username">Учетная запись</label>
+            <input class="form-control mb-3" id="sip-username" type="text" disabled>
+            <label class="form-label" for="peer">Кому звонить</label>
+            <div class="input-group mb-3">
+              <input class="form-control" id="peer" type="text" placeholder="sip:1000@example.com">
+              <button class="btn btn-success" type="button" id="call">Позвонить</button>
+            </div>
+            <div id="call-status"></div>
+          </div>
+        </div>
+      </section>
 
+      <section class="col-12 col-xl-7">
+        <div class="card shadow-sm mb-4">
+          <div class="card-header">Медиа потока</div>
+          <div class="card-body">
+            <div id="stream-media" class="row g-3"></div>
+          </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+          <div class="card-header">Локальный SIP-медиа</div>
+          <div class="card-body">
+            <div id="sip-local-media" class="row g-3"></div>
+          </div>
+        </div>
+
+        <div class="card shadow-sm">
+          <div class="card-header">Удаленный SIP-медиа</div>
+          <div class="card-body">
+            <div id="sip-remote-media" class="row g-3"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
 </body>
 </html>
