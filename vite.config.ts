@@ -10,7 +10,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         index: resolve(__dirname, 'index.html'),
-        streaming: resolve(__dirname, 'streaming.html'),
         sip: resolve(__dirname, 'sip.html'),
       },
     },
