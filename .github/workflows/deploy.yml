@@ -11,25 +11,31 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+
       - name: Node version
         run: node --version
+
       - name: Install dependencies
         run: npm install
+
       - name: Build
         run: npm run build
-      - name: Upload files to Object Storage
-        id: s3-upload
-        uses: yc-actions/yc-obj-storage-upload@v2
+
+      - name: Configure AWS credentials for Yandex S3
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          yc-sa-json-credentials: ${{ secrets.YC_SA_JSON_CREDENTIALS }}
-          bucket: ${{ secrets.BUCKET }}
-          root: ./dist
-          include: |
-            **/*.*
-            **/*
-            *.*
-            *
+          aws-access-key-id: ${{ secrets.YANDEX_CLOUD_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.YANDEX_CLOUD_SECRET_ACCESS_KEY }}
+          aws-region: ru-central1
+          aws-session-token: ${{ secrets.YANDEX_CLOUD_SESSION_TOKEN }} # опционально
+
+      - name: Upload files to Yandex Object Storage
+        run: |
+          aws s3 sync ./dist s3://${{ secrets.BUCKET }} \
+            --endpoint-url https://storage.yandexcloud.net \
+            --delete
