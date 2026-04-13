@@ -1,0 +1,35 @@
+name: Deploy site to Yandex S3
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Node version
+        run: node --version
+      - name: Install dependencies
+        run: npm install
+      - name: Build
+        run: npm run build
+      - name: Upload files to Object Storage
+        id: s3-upload
+        uses: yc-actions/yc-obj-storage-upload@v2
+        with:
+          yc-sa-json-credentials: ${{ secrets.YC_SA_JSON_CREDENTIALS }}
+          bucket: ${{ secrets.BUCKET }}
+          root: ./dist
+          include: |
+            **/*.*
+            **/*
+            *.*
+            *
