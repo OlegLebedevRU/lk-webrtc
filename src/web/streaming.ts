@@ -17,6 +17,7 @@ const streamMetadata = queryRequired<HTMLElement>('#stream-metadata');
 const sipStatus = queryRequired<HTMLElement>('#sip-status');
 const callStatus = queryRequired<HTMLElement>('#call-status');
 const sipUsername = queryRequired<HTMLInputElement>('#sip-username');
+const useVideoCheckbox = queryRequired<HTMLInputElement>('#sip-use-video');
 const peerInput = queryRequired<HTMLInputElement>('#peer');
 const callButton = queryRequired<HTMLButtonElement>('#call');
 
@@ -129,7 +130,7 @@ async function init(): Promise<void> {
       }
 
       try {
-        await sipPlugin?.answer(jsep, !jsep, false);
+        await sipPlugin?.answer(jsep, !jsep, useVideoCheckbox.checked);
         setAlert(callStatus, `Вызов от ${caller} принят.`, 'success');
       } catch (error) {
         setAlert(callStatus, describeError(error), 'danger');
@@ -222,7 +223,7 @@ callButton.addEventListener('click', async () => {
   }
 
   try {
-    await sipPlugin.call(uri, false);
+    await sipPlugin.call(uri, useVideoCheckbox.checked);
   } catch (error) {
     setAlert(callStatus, describeError(error), 'danger');
   }
