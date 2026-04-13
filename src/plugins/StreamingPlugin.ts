@@ -223,9 +223,10 @@ export class StreamingPlugin {
     }
 
     if (streaming === 'list' || streaming === 'update') {
-      const listResult = result as StreamingListResult | undefined;
-      if (listResult?.list) {
-        this.streams = listResult.list;
+      // The list array is directly on msg (plugindata.data), not nested under result
+      const list = msg['list'] as StreamInfo[] | undefined;
+      if (list) {
+        this.streams = list;
         this.callbacks.onStreamsList?.(this.streams);
       }
       return;
