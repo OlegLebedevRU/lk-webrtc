@@ -126,11 +126,13 @@ export class SipPlugin {
 
   /**
    * Answers an incoming SIP call.
+   * Pass `offerless = true` when Janus reports an incoming call without a JSEP offer.
+   * In that case `jsep` may be omitted and the plugin will create a local offer instead.
    */
-  async answer(jsep: JanusJsep, offerless = false, useVideo = false): Promise<void> {
+  async answer(jsep?: JanusJsep, offerless = false, useVideo = false): Promise<void> {
     this.ensureHandle();
 
-    if (offerless) {
+    if (offerless || !jsep) {
       const tracks: JanusTrackOption[] = [{ type: 'audio', capture: true, recv: true }];
       if (useVideo) {
         tracks.push({ type: 'video', capture: true, recv: true });
