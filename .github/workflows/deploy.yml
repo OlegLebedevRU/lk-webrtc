@@ -13,7 +13,7 @@ jobs:
       - name: Prepare dist
         run: |
           mkdir -p dist
-          cp index.html dist/
+          cp index.html dist/ 2>/dev/null || true
           cp streaming.html dist/
           cp sip.html dist/
           cp nop.html dist/
@@ -27,15 +27,12 @@ jobs:
       - name: List build output
         run: find dist -type f
 
-      - name: Upload files to Object Storage
-        id: s3-upload
-        uses: yc-actions/yc-obj-storage-upload@v2
-        with:
-          yc-sa-json-credentials: ${{ secrets.YC_SA_JSON_CREDENTIALS }}
-          bucket: ${{ secrets.BUCKET }}
-          root: ./dist
-          include: |
-            **/*.*
-            **/*
-            *.*
-            *
+      - name: Upload files to Yandex Object Storage
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.YANDEX_CLOUD_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.YANDEX_CLOUD_SECRET_ACCESS_KEY }}
+        run: |
+          aws s3 sync ./dist s3://${{ secrets.BUCKET }} \
+            --endpoint-url https://storage.yandexcloud.net \
+            --delete \
+            --region ru-central1
