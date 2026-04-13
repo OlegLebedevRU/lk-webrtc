@@ -68,13 +68,29 @@ export class StreamingPlugin {
 
   /**
    * Fetches the list of available streams from the server.
+   * The Janus Streaming Plugin responds to 'list' as a synchronous transaction,
+   * so the result is delivered via the success callback of send(), not onmessage.
    */
   async updateStreamsList(): Promise<StreamInfo[]> {
     this.ensureHandle();
     const request: StreamingListRequest = { request: 'list' };
-    this.handle!.send({ message: request });
-    // The result is delivered asynchronously via onmessage -> handleMessage
-    return this.streams;
+    return new Promise((resolve, reject) => {
+      this.handle!.send({
+        message: request,
+        success: (data?: Record<string, unknown>) => {
+          const listResult = data as StreamingListResult | undefined;
+          if (listResult?.list) {
+            this.streams = listResult.list;
+            this.callbacks.onStreamsList?.(this.streams);
+          }
+          resolve(this.streams);
+        },
+        error: (cause: string) => {
+          this.callbacks.onError?.(cause);
+          reject(new Error(cause));
+        },
+      });
+    });
   }
 
   /**
@@ -207,9 +223,11 @@ export class StreamingPlugin {
     }
 
     if (streaming === 'list' || streaming === 'update') {
-      const listResult = result as StreamingListResult | undefined;
-      if (listResult?.list) {
-        this.streams = listResult.list;
+      // Handles asynchronous list/update notifications pushed by the server.
+      // Client-initiated list requests are handled via the success callback in updateStreamsList().
+      const list = msg['list'] as StreamInfo[] | undefined;
+      if (list) {
+        this.streams = list;
         this.callbacks.onStreamsList?.(this.streams);
       }
       return;

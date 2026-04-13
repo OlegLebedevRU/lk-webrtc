@@ -10,6 +10,7 @@ export interface StreamMedia {
   pt?: number;
   rtpmap?: string;
   fmtp?: string;
+  age_ms?: number;
 }
 
 export interface StreamInfo {
