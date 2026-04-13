@@ -223,7 +223,8 @@ export class StreamingPlugin {
     }
 
     if (streaming === 'list' || streaming === 'update') {
-      // The list array is directly on msg (plugindata.data), not nested under result
+      // Handles asynchronous list/update notifications pushed by the server.
+      // Client-initiated list requests are handled via the success callback in updateStreamsList().
       const list = msg['list'] as StreamInfo[] | undefined;
       if (list) {
         this.streams = list;
