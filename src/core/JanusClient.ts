@@ -1,5 +1,7 @@
+import adapter from 'webrtc-adapter';
 import type {
   JanusInstance,
+  JanusInitOptions,
   JanusPluginHandle,
   JanusPluginCallbacks,
   JanusConstructorOptions,
@@ -9,7 +11,7 @@ import type { AppConfig } from '../config/settings.ts';
 // Janus is loaded as a global script (vendor library)
 declare const Janus: {
   new(options: JanusConstructorOptions): JanusInstance;
-  init(options: { debug?: boolean | 'all' | string[]; callback?: () => void }): void;
+  init(options: JanusInitOptions): void;
   isWebrtcSupported(): boolean;
   randomString(length: number): string;
 };
@@ -49,6 +51,7 @@ export class JanusClient {
     return new Promise((resolve) => {
       Janus.init({
         debug: false,
+        dependencies: { adapter },
         callback: () => resolve(),
       });
     });
