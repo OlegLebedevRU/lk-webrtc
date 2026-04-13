@@ -67,7 +67,7 @@ export interface JanusMessage {
 export interface JanusPluginHandle {
   getId(): number;
   getPlugin(): string;
-  send(options: { message: Record<string, unknown>; jsep?: JanusJsep }): void;
+  send(options: { message: Record<string, unknown>; jsep?: JanusJsep; success?: (data?: Record<string, unknown>) => void; error?: (cause: string) => void }): void;
   createOffer(options: {
     tracks?: JanusTrackOption[];
     media?: JanusMediaConstraints;
