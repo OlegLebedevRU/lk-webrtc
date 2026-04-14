@@ -38,7 +38,7 @@
     </div>
 
     <!-- Call control widget - hidden by default -->
-    <div id="call-widget" class="card shadow-sm mb-4" style="display: none;">
+    <div id="call-widget" class="card shadow-sm mb-4 d-none">
       <div class="card-header d-flex align-items-center justify-content-between">
         <span id="call-widget-title">Входящий вызов</span>
         <span id="call-widget-status" title="Статус вызова">📞</span>
@@ -46,26 +46,25 @@
       <div class="card-body py-2">
         <div id="call-widget-incoming" class="d-flex gap-2">
           <button class="btn btn-success flex-grow-1" type="button" id="call-answer">📞 Ответить</button>
-          <button class="btn btn-danger" type="button" id="call-decline">Отклонить</button>
+          <button class="btn btn-danger flex-grow-1" type="button" id="call-decline">Отклонить</button>
         </div>
         <div id="call-widget-active" class="d-flex gap-2" style="display: none;">
           <button class="btn btn-primary flex-grow-1" type="button" id="call-open">🔓 Открыть</button>
-          <button class="btn btn-danger" type="button" id="call-hangup">Завершить</button>
+          <button class="btn btn-danger flex-grow-1" type="button" id="call-hangup">Завершить</button>
         </div>
       </div>
-    </div>
 
     <div class="row g-4">
       <section class="col-12 col-xl-6">
         <div class="card shadow-sm mb-4">
-          <div class="card-header">
+          <div class="card-header d-flex align-items-center justify-content-between">
             <a class="text-decoration-none" data-bs-toggle="collapse" href="#streams-collapse" role="button" aria-expanded="true" aria-controls="streams-collapse">
               Потоки ▾
             </a>
+            <span id="stream-status-icon" title="Статус потоков" role="status" aria-live="polite">⚪</span>
           </div>
           <div class="collapse show" id="streams-collapse">
             <div class="card-body">
-              <div id="stream-status" class="mb-3"></div>
               <label class="form-label" for="stream-select">Доступные потоки</label>
               <div class="input-group mb-3">
                 <select class="form-select" id="stream-select"></select>
