@@ -14,7 +14,7 @@ import type { JanusJsep, StreamInfo } from '../index.ts';
 import { describeError, MediaRenderer, queryRequired, setAlert, setButtonState } from './common.ts';
 
 const janusStatus = queryRequired<HTMLElement>('#janus-status');
-const streamStatus = queryRequired<HTMLElement>('#stream-status');
+const streamStatusIcon = queryRequired<HTMLElement>('#stream-status-icon');
 const streamSelect = queryRequired<HTMLSelectElement>('#stream-select');
 const refreshStreamsButton = queryRequired<HTMLButtonElement>('#refresh-streams');
 const watchStreamButton = queryRequired<HTMLButtonElement>('#watch-stream');
@@ -74,6 +74,11 @@ function setSipStatus(icon: string, title: string): void {
   sipStatusIcon.textContent = icon;
   sipStatusIcon.title = title;
   sipStatusIcon.setAttribute('aria-label', title);
+}
+
+function setStreamStatus(icon: string, title: string): void {
+  streamStatusIcon.textContent = icon;
+  streamStatusIcon.title = title;
 }
 
 function updatePinStatus(): void {
@@ -174,7 +179,7 @@ function renderStreams(streams: StreamInfo[]): void {
     streamSelect.appendChild(option);
     watchStreamButton.disabled = true;
     streamMetadata.textContent = '';
-    setAlert(streamStatus, 'Сервер не вернул доступных потоков.', 'warning');
+    setStreamStatus('⚠️', 'Сервер не вернул доступных потоков.');
     return;
   }
 
@@ -187,7 +192,7 @@ function renderStreams(streams: StreamInfo[]): void {
 
   watchStreamButton.disabled = false;
   renderSelectedStreamMetadata(streams);
-  setAlert(streamStatus, `Получено потоков: ${streams.length}`, 'success');
+  setStreamStatus('🟢', `Получено потоков: ${streams.length}`);
 }
 
 function renderSelectedStreamMetadata(streams: StreamInfo[]): void {
@@ -198,7 +203,7 @@ function renderSelectedStreamMetadata(streams: StreamInfo[]): void {
 
 async function init(): Promise<void> {
   setJanusStatus('🔵', 'Инициализация Janus...');
-  setAlert(streamStatus, 'Загрузка списка потоков...', 'info');
+  setStreamStatus('🔵', 'Загрузка списка потоков...');
   setSipStatus('🔵', 'Регистрация SIP...');
   setAlert(callStatus, 'Звонок не активен.', 'secondary');
   updateCallButton();
@@ -220,9 +225,9 @@ async function init(): Promise<void> {
     },
     onCleanup: () => {
       streamRenderer.clear();
-      setAlert(streamStatus, 'Просмотр потока остановлен.', 'warning');
+      setStreamStatus('⚪', 'Просмотр потока остановлен.');
     },
-    onError: (error) => setAlert(streamStatus, error, 'danger'),
+    onError: (error) => setStreamStatus('🔴', error),
   });
 
   await streamingPlugin.attach(client);
@@ -358,11 +363,11 @@ refreshStreamsButton.addEventListener('click', async () => {
   if (!streamingPlugin) {
     return;
   }
-  setAlert(streamStatus, 'Обновление списка потоков...', 'info');
+  setStreamStatus('🔵', 'Обновление списка потоков...');
   try {
     await streamingPlugin.updateStreamsList();
   } catch (error) {
-    setAlert(streamStatus, describeError(error), 'danger');
+    setStreamStatus('🔴', describeError(error));
   }
 });
 
@@ -378,14 +383,14 @@ watchStreamButton.addEventListener('click', async () => {
     return;
   }
 
-  setAlert(streamStatus, 'Запрос на запуск потока отправлен.', 'info');
+  setStreamStatus('🔵', 'Запрос на запуск потока отправлен.');
 
   try {
     stopActiveStreamSafely();
     await streamingPlugin.startStream(Number(streamSelect.value));
     renderSelectedStreamMetadata(streamingPlugin.getAllStreams());
   } catch (error) {
-    setAlert(streamStatus, describeError(error), 'danger');
+    setStreamStatus('🔴', describeError(error));
   }
 });
 
@@ -448,7 +453,7 @@ callHangupButton.addEventListener('click', () => {
 void init().catch((error) => {
   const message = describeError(error);
   setJanusStatus('🔴', message);
-  setAlert(streamStatus, message, 'danger');
+  setStreamStatus('🔴', message);
   if (handleMissingApiKeyError(error)) {
     updateCallButton();
     return;
