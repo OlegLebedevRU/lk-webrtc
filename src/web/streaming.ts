@@ -124,9 +124,11 @@ function stopActiveStreamSafely(): void {
     if (!streamingPlugin.getSelectedStream()) {
       return;
     }
+    // stopStream may throw in transient Janus handle states; safe to ignore here.
     streamingPlugin.stopStream();
     streamRenderer.clear();
   } catch {
+    // Non-critical: stream could already be stopped/detached.
     return;
   }
 }
