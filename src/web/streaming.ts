@@ -2,6 +2,7 @@ import {
   JanusClient,
   SipPlugin,
   StreamingPlugin,
+  API_KEY_NOT_SET_ERROR,
   clearApiKey,
   getApiKey,
   getJanusConfig,
@@ -81,7 +82,7 @@ function collapsePin(show: boolean): void {
 
 function handleMissingApiKeyError(error: unknown): boolean {
   const message = describeError(error);
-  if (message !== 'API key not set. Please enter your PIN code.') {
+  if (message !== API_KEY_NOT_SET_ERROR) {
     return false;
   }
 
@@ -229,7 +230,12 @@ async function init(): Promise<void> {
 }
 
 pinSaveButton.addEventListener('click', () => {
-  setApiKey(pinInput.value.trim());
+  const key = pinInput.value.trim();
+  if (key) {
+    setApiKey(key);
+  } else {
+    clearApiKey();
+  }
   updatePinStatus();
   collapsePin(false);
 });
@@ -300,12 +306,11 @@ callButton.addEventListener('click', async () => {
 void init().catch((error) => {
   const message = describeError(error);
   setJanusStatus('🔴', message);
+  setAlert(streamStatus, message, 'danger');
   if (handleMissingApiKeyError(error)) {
-    setAlert(streamStatus, message, 'danger');
     updateCallButton();
     return;
   }
-  setAlert(streamStatus, message, 'danger');
   setAlert(sipStatus, message, 'danger');
   updateCallButton();
 });

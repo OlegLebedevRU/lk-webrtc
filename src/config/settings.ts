@@ -12,6 +12,7 @@ export interface AccountInfo {
 
 const API_BASE = 'https://d5deskhogog1nujgihou.uvah0e6r.apigw.yandexcloud.net';
 const API_KEY_STORAGE_KEY = 'lk-webrtc-api-key';
+export const API_KEY_NOT_SET_ERROR = 'API key not set. Please enter your PIN code.';
 
 export function getApiKey(): string | null {
   const key = localStorage.getItem(API_KEY_STORAGE_KEY);
@@ -32,7 +33,7 @@ export function clearApiKey(): void {
 function authHeaders(): HeadersInit {
   const apiKey = getApiKey();
   if (!apiKey) {
-    throw new Error('API key not set. Please enter your PIN code.');
+    throw new Error(API_KEY_NOT_SET_ERROR);
   }
   return { 'X-API-Key': apiKey };
 }

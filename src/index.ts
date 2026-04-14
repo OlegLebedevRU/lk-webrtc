@@ -21,6 +21,7 @@ export {
   getApiKey,
   setApiKey,
   clearApiKey,
+  API_KEY_NOT_SET_ERROR,
 } from './config/settings.ts';
 export type { AppConfig, AccountInfo } from './config/settings.ts';
 
