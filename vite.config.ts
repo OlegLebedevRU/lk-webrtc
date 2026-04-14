@@ -16,5 +16,12 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    proxy: {
+      '/api': {
+        target: 'https://d5deskhogog1nujgihou.uvah0e6r.apigw.yandexcloud.net',
+        changeOrigin: true,
+        secure: true,
+      },
+    },
   },
 });
