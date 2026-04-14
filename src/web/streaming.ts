@@ -73,7 +73,7 @@ async function init(): Promise<void> {
   setAlert(callStatus, 'Звонок не активен.', 'secondary');
   updateCallButton();
 
-  const client = new JanusClient(getJanusConfig(), {
+  const client = new JanusClient(await getJanusConfig(), {
     onConnected: () => setAlert(appStatus, 'Соединение с Janus установлено.', 'success'),
     onError: (error) => setAlert(appStatus, error, 'danger'),
     onDestroyed: () => setAlert(appStatus, 'Сессия Janus завершена.', 'warning'),

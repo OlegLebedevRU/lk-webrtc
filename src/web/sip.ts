@@ -50,7 +50,7 @@ async function bootstrap(): Promise<void> {
   displayNameInput.value = defaults.displayName;
   secretInput.value = defaults.secret;
 
-  const client = new JanusClient(getJanusConfig(), {
+  const client = new JanusClient(await getJanusConfig(), {
     onConnected: () => setAlert(appStatus, 'Соединение с Janus установлено.', 'success'),
     onError: (error) => setAlert(appStatus, error, 'danger'),
     onDestroyed: () => setAlert(appStatus, 'Сессия Janus завершена.', 'warning'),

@@ -5,34 +5,27 @@ export interface AppConfig {
   iceServers: RTCIceServer[] | null;
 }
 
+const API_BASE = 'https://d5deskhogog1nujgihou.uvah0e6r.apigw.yandexcloud.net';
+
 /**
- * Returns the Janus server configuration based on the current page protocol.
- * TODO: Replace with an API call to fetch configuration from backend.
+ * Fetches Janus server configuration from API Gateway.
  */
-export function getJanusConfig(): AppConfig {
-  const isHttps =
-    typeof window !== 'undefined' && window.location.protocol === 'https:';
-
-  const janusServer: string | string[] = isHttps
-    ? ['wss://iot.leo4.ru:8989']
-    : 'http://iot.leo4.ru:8088/janus';
-
-  return {
-    janusServer,
-    iceServers: null,
-  };
+export async function getJanusConfig(): Promise<AppConfig> {
+  const resp = await fetch(`${API_BASE}/api/janus-config-wss`);
+  if (!resp.ok) {
+    throw new Error(`Failed to fetch Janus config: ${resp.status} ${resp.statusText}`);
+  }
+  return resp.json();
 }
 
 /**
- * Returns SIP credentials for the panel device.
- * TODO: Replace with an API call to fetch credentials from backend.
+ * Fetches SIP credentials from API Gateway.
+ * TODO: Add authentication when moving to production.
  */
 export async function getSipCredentials(): Promise<SipCredentials> {
-  return {
-    username: 'sip:6004@87.242.100.34',
-    authuser: '6004',
-    displayName: 'Panel N 6004',
-    proxy: 'sip:87.242.100.34:5060',
-    secret: '6004',
-  };
+  const resp = await fetch(`${API_BASE}/api/sip-credentials`);
+  if (!resp.ok) {
+    throw new Error(`Failed to fetch SIP credentials: ${resp.status} ${resp.statusText}`);
+  }
+  return resp.json();
 }
