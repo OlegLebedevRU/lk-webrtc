@@ -245,12 +245,16 @@ pinSaveButton.addEventListener('click', async () => {
   updatePinStatus();
   collapsePin(false);
 
-  if (sipPlugin && !sipRegistered) {
+  const plugin = sipPlugin;
+  if (plugin && !sipRegistered) {
     setSipStatus('🔵', 'Загрузка SIP-учётных данных...');
     try {
       const credentials = await getSipCredentials();
+      if (sipRegistered) {
+        return;
+      }
       sipUsername.value = credentials.username;
-      await sipPlugin.register(credentials);
+      await plugin.register(credentials);
     } catch (error) {
       if (!handleMissingApiKeyError(error)) {
         setSipStatus('🔴', `Не удалось загрузить учётные данные SIP: ${describeError(error)}`);
