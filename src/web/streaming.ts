@@ -129,7 +129,6 @@ function stopActiveStreamSafely(): void {
     streamRenderer.clear();
   } catch {
     // Non-critical: stream could already be stopped/detached.
-    return;
   }
 }
 
