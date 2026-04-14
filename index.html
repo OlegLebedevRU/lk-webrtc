@@ -53,6 +53,7 @@
           <button class="btn btn-danger flex-grow-1" type="button" id="call-hangup">Завершить</button>
         </div>
       </div>
+    </div>
 
     <div class="row g-4">
       <section class="col-12 col-xl-6">
@@ -61,7 +62,7 @@
             <a class="text-decoration-none" data-bs-toggle="collapse" href="#streams-collapse" role="button" aria-expanded="true" aria-controls="streams-collapse">
               Потоки ▾
             </a>
-            <span id="stream-status-icon" title="Статус потоков" role="status" aria-live="polite">⚪</span>
+            <span id="stream-status-icon" title="Статус потоков" role="status" aria-live="polite" aria-atomic="true" aria-label="Статус потоков">⚪</span>
           </div>
           <div class="collapse show" id="streams-collapse">
             <div class="card-body">
