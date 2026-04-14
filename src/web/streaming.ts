@@ -58,6 +58,7 @@ function setJanusStatus(icon: string, title: string): void {
 function setSipStatus(icon: string, title: string): void {
   sipStatusIcon.textContent = icon;
   sipStatusIcon.title = title;
+  sipStatusIcon.setAttribute('aria-label', title);
 }
 
 function updatePinStatus(): void {
