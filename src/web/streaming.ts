@@ -28,6 +28,7 @@ const pinSaveButton = queryRequired<HTMLButtonElement>('#pin-save');
 const pinClearButton = queryRequired<HTMLButtonElement>('#pin-clear');
 const pinStatus = queryRequired<HTMLElement>('#pin-status');
 const pinCollapse = queryRequired<HTMLElement>('#pin-collapse');
+sipStatusIcon.setAttribute('aria-label', sipStatusIcon.title);
 
 const streamRenderer = new MediaRenderer(
   queryRequired<HTMLElement>('#stream-media'),
@@ -253,7 +254,7 @@ pinSaveButton.addEventListener('click', async () => {
       await sipPlugin.register(credentials);
     } catch (error) {
       if (!handleMissingApiKeyError(error)) {
-        setSipStatus('🔴', describeError(error));
+        setSipStatus('🔴', `Не удалось загрузить учётные данные SIP: ${describeError(error)}`);
       }
     }
   }
