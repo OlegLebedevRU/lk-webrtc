@@ -61,17 +61,23 @@
 
       <section class="col-12 col-xl-6">
         <div class="card shadow-sm mb-4">
-          <div class="card-header">SIP</div>
-          <div class="card-body">
-            <div id="sip-status" class="mb-3"></div>
-            <label class="form-label" for="sip-username">Учетная запись</label>
-            <input class="form-control mb-3" id="sip-username" type="text" disabled>
-            <label class="form-label" for="peer">Кому звонить</label>
-            <div class="input-group mb-3">
-              <input class="form-control" id="peer" type="text" placeholder="sip:1000@example.com">
-              <button class="btn btn-success" type="button" id="call">Позвонить</button>
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <a class="text-decoration-none" data-bs-toggle="collapse" href="#sip-collapse" role="button" aria-expanded="false" aria-controls="sip-collapse">
+              SIP ▾
+            </a>
+            <span id="sip-status-icon" title="Статус SIP">⚪</span>
+          </div>
+          <div class="collapse" id="sip-collapse">
+            <div class="card-body">
+              <label class="form-label" for="sip-username">Учетная запись</label>
+              <input class="form-control mb-3" id="sip-username" type="text" disabled>
+              <label class="form-label" for="peer">Кому звонить</label>
+              <div class="input-group mb-3">
+                <input class="form-control" id="peer" type="text" placeholder="sip:1000@example.com">
+                <button class="btn btn-success" type="button" id="call">Позвонить</button>
+              </div>
+              <div id="call-status"></div>
             </div>
-            <div id="call-status"></div>
           </div>
         </div>
       </section>
