@@ -12,24 +12,18 @@
 </head>
 <body>
   <main class="container py-2">
-    <div class="mb-4">
-      <h1 class="mb-1">Streaming + SIP</h1>
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h1 class="mb-0" style="font-size: 1.4rem;">Streaming + SIP</h1>
+      <a class="text-decoration-none small" data-bs-toggle="collapse" href="#pin-collapse" role="button" aria-expanded="false" aria-controls="pin-collapse">
+        🔑 <span id="pin-status" class="badge bg-secondary">не задан</span>
+      </a>
     </div>
 
-    <div class="card shadow-sm mb-3">
-      <div class="card-header py-2">
-        <a class="text-decoration-none small" data-bs-toggle="collapse" href="#pin-collapse" role="button" aria-expanded="false" aria-controls="pin-collapse">
-          🔑 Пинкод <span id="pin-status" class="badge bg-secondary ms-1">не задан</span>
-        </a>
-      </div>
-      <div class="collapse" id="pin-collapse">
-        <div class="card-body py-2">
-          <div class="input-group input-group-sm">
-            <input class="form-control" id="pin-input" type="password" placeholder="Введите пинкод..." aria-label="Пинкод">
-            <button class="btn btn-primary" type="button" id="pin-save">Сохранить</button>
-            <button class="btn btn-outline-danger" type="button" id="pin-clear">Сбросить</button>
-          </div>
-        </div>
+    <div class="collapse mb-2" id="pin-collapse">
+      <div class="input-group input-group-sm">
+        <input class="form-control" id="pin-input" type="password" placeholder="Введите пинкод..." aria-label="Пинкод">
+        <button class="btn btn-primary" type="button" id="pin-save">Сохранить</button>
+        <button class="btn btn-outline-danger" type="button" id="pin-clear">Сбросить</button>
       </div>
     </div>
 

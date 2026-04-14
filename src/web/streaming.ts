@@ -115,6 +115,22 @@ function collapseStreams(show: boolean): void {
   streamsCollapse.classList.toggle('show', show);
 }
 
+function stopActiveStreamSafely(): void {
+  if (!streamingPlugin) {
+    return;
+  }
+
+  try {
+    if (!streamingPlugin.getSelectedStream()) {
+      return;
+    }
+    streamingPlugin.stopStream();
+    streamRenderer.clear();
+  } catch {
+    return;
+  }
+}
+
 function showCallWidget(mode: 'incoming' | 'active', caller: string): void {
   callWidget.style.display = '';
   callWidgetTitle.textContent = mode === 'incoming'
@@ -235,6 +251,7 @@ async function init(): Promise<void> {
       pendingIncomingCaller = caller;
       pendingIncomingJsep = jsep;
       showCallWidget('incoming', caller);
+      stopActiveStreamSafely();
 
       if (defaultStreamId && streamingPlugin) {
         try {
@@ -262,6 +279,7 @@ async function init(): Promise<void> {
       updateCallButton();
       hideCallWidget();
       collapseStreams(true);
+      stopActiveStreamSafely();
       setAlert(callStatus, reason || 'Звонок завершен.', 'warning');
     },
     onLocalTrack: () => {
@@ -275,6 +293,7 @@ async function init(): Promise<void> {
       updateCallButton();
       hideCallWidget();
       collapseStreams(true);
+      stopActiveStreamSafely();
     },
     onError: (error) => setAlert(callStatus, error, 'danger'),
   });
@@ -361,6 +380,7 @@ watchStreamButton.addEventListener('click', async () => {
   setAlert(streamStatus, 'Запрос на запуск потока отправлен.', 'info');
 
   try {
+    stopActiveStreamSafely();
     await streamingPlugin.startStream(Number(streamSelect.value));
     renderSelectedStreamMetadata(streamingPlugin.getAllStreams());
   } catch (error) {
