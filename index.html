@@ -14,15 +14,32 @@
   <main class="container py-4">
     <div class="mb-4">
       <h1 class="mb-1">Streaming + SIP</h1>
-      <p class="text-muted mb-0">Новый web-слой на TypeScript-модулях для статического развертывания на S3.</p>
     </div>
 
-    <div id="app-status" class="mb-3"></div>
+    <div class="card shadow-sm mb-3">
+      <div class="card-header py-2">
+        <a class="text-decoration-none small" data-bs-toggle="collapse" href="#pin-collapse" role="button" aria-expanded="false" aria-controls="pin-collapse">
+          🔑 Пинкод <span id="pin-status" class="badge bg-secondary ms-1">не задан</span>
+        </a>
+      </div>
+      <div class="collapse" id="pin-collapse">
+        <div class="card-body py-2">
+          <div class="input-group input-group-sm">
+            <input class="form-control" id="pin-input" type="password" placeholder="Введите пинкод..." aria-label="Пинкод">
+            <button class="btn btn-primary" type="button" id="pin-save">Сохранить</button>
+            <button class="btn btn-outline-danger" type="button" id="pin-clear">Сбросить</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div class="card shadow-sm mb-4">
-      <div class="card-header">Видео с камеры</div>
-      <div class="card-body">
-        <div id="stream-media" class="row g-3"></div>
+      <div class="card-header d-flex align-items-center justify-content-between">
+        Видео с камеры
+        <span id="janus-status" title="Статус Janus">⚪</span>
+      </div>
+      <div class="card-body p-0">
+        <div id="stream-media"></div>
       </div>
     </div>
 

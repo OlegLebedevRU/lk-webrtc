@@ -11,12 +11,31 @@ export interface AccountInfo {
 }
 
 const API_BASE = 'https://d5deskhogog1nujgihou.uvah0e6r.apigw.yandexcloud.net';
+const API_KEY_STORAGE_KEY = 'lk-webrtc-api-key';
+export const API_KEY_NOT_SET_ERROR = 'API key not set. Please enter your PIN code.';
 
-// TODO: Replace with real key management (login flow, secure storage, etc.)
-const API_KEY = 'pk-panel-6004-a1b2c3d4e5f6';
+export function getApiKey(): string | null {
+  const key = localStorage.getItem(API_KEY_STORAGE_KEY);
+  if (!key || key.trim() === '') {
+    return null;
+  }
+  return key;
+}
+
+export function setApiKey(key: string): void {
+  localStorage.setItem(API_KEY_STORAGE_KEY, key);
+}
+
+export function clearApiKey(): void {
+  localStorage.removeItem(API_KEY_STORAGE_KEY);
+}
 
 function authHeaders(): HeadersInit {
-  return { 'X-API-Key': API_KEY };
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    throw new Error(API_KEY_NOT_SET_ERROR);
+  }
+  return { 'X-API-Key': apiKey };
 }
 
 /**
