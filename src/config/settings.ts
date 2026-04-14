@@ -8,6 +8,7 @@ export interface AppConfig {
 export interface AccountInfo {
   id: string;
   name: string;
+  defaultStreamId: number | null;
 }
 
 const API_BASE = 'https://d5deskhogog1nujgihou.uvah0e6r.apigw.yandexcloud.net';

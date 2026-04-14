@@ -5,11 +5,12 @@ import {
   API_KEY_NOT_SET_ERROR,
   clearApiKey,
   getApiKey,
+  getAccountInfo,
   getJanusConfig,
   getSipCredentials,
   setApiKey,
 } from '../index.ts';
-import type { StreamInfo } from '../index.ts';
+import type { JanusJsep, StreamInfo } from '../index.ts';
 import { describeError, MediaRenderer, queryRequired, setAlert, setButtonState } from './common.ts';
 
 const janusStatus = queryRequired<HTMLElement>('#janus-status');
@@ -23,11 +24,21 @@ const callStatus = queryRequired<HTMLElement>('#call-status');
 const sipUsername = queryRequired<HTMLInputElement>('#sip-username');
 const peerInput = queryRequired<HTMLInputElement>('#peer');
 const callButton = queryRequired<HTMLButtonElement>('#call');
+const callWidget = queryRequired<HTMLElement>('#call-widget');
+const callWidgetTitle = queryRequired<HTMLElement>('#call-widget-title');
+const callWidgetStatus = queryRequired<HTMLElement>('#call-widget-status');
+const callWidgetIncoming = queryRequired<HTMLElement>('#call-widget-incoming');
+const callWidgetActive = queryRequired<HTMLElement>('#call-widget-active');
+const callAnswerButton = queryRequired<HTMLButtonElement>('#call-answer');
+const callDeclineButton = queryRequired<HTMLButtonElement>('#call-decline');
+const callOpenButton = queryRequired<HTMLButtonElement>('#call-open');
+const callHangupButton = queryRequired<HTMLButtonElement>('#call-hangup');
 const pinInput = queryRequired<HTMLInputElement>('#pin-input');
 const pinSaveButton = queryRequired<HTMLButtonElement>('#pin-save');
 const pinClearButton = queryRequired<HTMLButtonElement>('#pin-clear');
 const pinStatus = queryRequired<HTMLElement>('#pin-status');
 const pinCollapse = queryRequired<HTMLElement>('#pin-collapse');
+const streamsCollapse = queryRequired<HTMLElement>('#streams-collapse');
 
 const streamRenderer = new MediaRenderer(
   queryRequired<HTMLElement>('#stream-media'),
@@ -38,6 +49,9 @@ let streamingPlugin: StreamingPlugin | null = null;
 let sipPlugin: SipPlugin | null = null;
 let sipRegistered = false;
 let inCall = false;
+let pendingIncomingJsep: JanusJsep | undefined = undefined;
+let pendingIncomingCaller = '';
+let defaultStreamId: number | null = null;
 
 type BootstrapCollapseInstance = {
   show: () => void;
@@ -84,6 +98,36 @@ function collapsePin(show: boolean): void {
   }
 
   pinCollapse.classList.toggle('show', show);
+}
+
+function collapseStreams(show: boolean): void {
+  const bootstrap = (window as Window & { bootstrap?: BootstrapApi }).bootstrap;
+  if (bootstrap?.Collapse) {
+    const instance = bootstrap.Collapse.getOrCreateInstance(streamsCollapse);
+    if (show) {
+      instance.show();
+    } else {
+      instance.hide();
+    }
+    return;
+  }
+  streamsCollapse.classList.toggle('show', show);
+}
+
+function showCallWidget(mode: 'incoming' | 'active', caller: string): void {
+  callWidget.style.display = '';
+  callWidgetTitle.textContent = mode === 'incoming'
+    ? `📞 Входящий вызов: ${caller}`
+    : `🔊 Разговор: ${caller}`;
+  callWidgetStatus.textContent = mode === 'incoming' ? '📞' : '🔊';
+  callWidgetIncoming.style.display = mode === 'incoming' ? '' : 'none';
+  callWidgetActive.style.display = mode === 'active' ? '' : 'none';
+}
+
+function hideCallWidget(): void {
+  callWidget.style.display = 'none';
+  pendingIncomingJsep = undefined;
+  pendingIncomingCaller = '';
 }
 
 function handleMissingApiKeyError(error: unknown): boolean {
@@ -181,18 +225,16 @@ async function init(): Promise<void> {
       setAlert(callStatus, 'Идет вызов...', 'info');
     },
     onIncomingCall: async (caller, jsep) => {
-      const accepted = window.confirm(`Входящий вызов от ${caller}. Принять?`);
-      if (!accepted) {
-        sipPlugin?.decline();
-        setAlert(callStatus, `Вызов от ${caller} отклонен.`, 'warning');
-        return;
-      }
+      pendingIncomingCaller = caller;
+      pendingIncomingJsep = jsep;
+      showCallWidget('incoming', caller);
 
-      try {
-        await sipPlugin?.answer(jsep, !jsep, false);
-        setAlert(callStatus, `Вызов от ${caller} принят.`, 'success');
-      } catch (error) {
-        setAlert(callStatus, describeError(error), 'danger');
+      if (defaultStreamId && streamingPlugin) {
+        try {
+          await streamingPlugin.startStream(defaultStreamId);
+        } catch {
+          // Stream start failed, non-critical
+        }
       }
     },
     onProgress: () => {
@@ -201,11 +243,14 @@ async function init(): Promise<void> {
     onCallAccepted: () => {
       inCall = true;
       updateCallButton();
-      setAlert(callStatus, 'Звонок установлен.', 'success');
+      showCallWidget('active', pendingIncomingCaller);
+      collapseStreams(false);
     },
     onCallHangup: (_code, reason) => {
       inCall = false;
       updateCallButton();
+      hideCallWidget();
+      collapseStreams(true);
       setAlert(callStatus, reason || 'Звонок завершен.', 'warning');
     },
     onLocalTrack: () => {
@@ -217,6 +262,8 @@ async function init(): Promise<void> {
     onCleanup: () => {
       inCall = false;
       updateCallButton();
+      hideCallWidget();
+      collapseStreams(true);
     },
     onError: (error) => setAlert(callStatus, error, 'danger'),
   });
@@ -233,6 +280,13 @@ async function init(): Promise<void> {
   }
   sipUsername.value = credentials.username;
   await sipPlugin.register(credentials);
+
+  try {
+    const accountInfo = await getAccountInfo();
+    defaultStreamId = accountInfo.defaultStreamId ?? null;
+  } catch {
+    // Account info optional, non-critical
+  }
 }
 
 pinSaveButton.addEventListener('click', async () => {
@@ -324,6 +378,32 @@ callButton.addEventListener('click', async () => {
   } catch (error) {
     setAlert(callStatus, describeError(error), 'danger');
   }
+});
+
+callAnswerButton.addEventListener('click', async () => {
+  if (!sipPlugin) return;
+  try {
+    await sipPlugin.answer(pendingIncomingJsep, !pendingIncomingJsep, false);
+    showCallWidget('active', pendingIncomingCaller);
+  } catch (error) {
+    setAlert(callStatus, describeError(error), 'danger');
+  }
+});
+
+callDeclineButton.addEventListener('click', () => {
+  if (!sipPlugin) return;
+  sipPlugin.decline();
+  hideCallWidget();
+});
+
+callOpenButton.addEventListener('click', () => {
+  if (!sipPlugin) return;
+  sipPlugin.sendDtmf('1');
+});
+
+callHangupButton.addEventListener('click', () => {
+  if (!sipPlugin) return;
+  sipPlugin.hangup();
 });
 
 void init().catch((error) => {
