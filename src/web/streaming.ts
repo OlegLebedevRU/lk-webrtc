@@ -18,7 +18,7 @@ const streamSelect = queryRequired<HTMLSelectElement>('#stream-select');
 const refreshStreamsButton = queryRequired<HTMLButtonElement>('#refresh-streams');
 const watchStreamButton = queryRequired<HTMLButtonElement>('#watch-stream');
 const streamMetadata = queryRequired<HTMLElement>('#stream-metadata');
-const sipStatus = queryRequired<HTMLElement>('#sip-status');
+const sipStatusIcon = queryRequired<HTMLElement>('#sip-status-icon');
 const callStatus = queryRequired<HTMLElement>('#call-status');
 const sipUsername = queryRequired<HTMLInputElement>('#sip-username');
 const peerInput = queryRequired<HTMLInputElement>('#peer');
@@ -55,6 +55,12 @@ function setJanusStatus(icon: string, title: string): void {
   janusStatus.title = title;
 }
 
+function setSipStatus(icon: string, title: string): void {
+  sipStatusIcon.textContent = icon;
+  sipStatusIcon.title = title;
+  sipStatusIcon.setAttribute('aria-label', title);
+}
+
 function updatePinStatus(): void {
   if (getApiKey()) {
     pinStatus.textContent = '✓ сохранён';
@@ -86,7 +92,7 @@ function handleMissingApiKeyError(error: unknown): boolean {
     return false;
   }
 
-  setAlert(sipStatus, message, 'danger');
+  setSipStatus('🔴', message);
   collapsePin(true);
   return true;
 }
@@ -130,7 +136,7 @@ function renderSelectedStreamMetadata(streams: StreamInfo[]): void {
 async function init(): Promise<void> {
   setJanusStatus('🔵', 'Инициализация Janus...');
   setAlert(streamStatus, 'Загрузка списка потоков...', 'info');
-  setAlert(sipStatus, 'Регистрация SIP...', 'info');
+  setSipStatus('🔵', 'Регистрация SIP...');
   setAlert(callStatus, 'Звонок не активен.', 'secondary');
   updateCallButton();
   updatePinStatus();
@@ -164,12 +170,12 @@ async function init(): Promise<void> {
       sipRegistered = true;
       sipUsername.value = username;
       updateCallButton();
-      setAlert(sipStatus, `SIP зарегистрирован: ${username}`, 'success');
+      setSipStatus('🟢', `SIP: ${username}`);
     },
     onRegistrationFailed: (code, reason) => {
       sipRegistered = false;
       updateCallButton();
-      setAlert(sipStatus, `Ошибка регистрации (${code}): ${reason}`, 'danger');
+      setSipStatus('🔴', `Ошибка регистрации (${code}): ${reason}`);
     },
     onCalling: () => {
       setAlert(callStatus, 'Идет вызов...', 'info');
@@ -229,7 +235,7 @@ async function init(): Promise<void> {
   await sipPlugin.register(credentials);
 }
 
-pinSaveButton.addEventListener('click', () => {
+pinSaveButton.addEventListener('click', async () => {
   const key = pinInput.value.trim();
   if (key) {
     setApiKey(key);
@@ -238,6 +244,23 @@ pinSaveButton.addEventListener('click', () => {
   }
   updatePinStatus();
   collapsePin(false);
+
+  const plugin = sipPlugin;
+  if (plugin && !sipRegistered) {
+    setSipStatus('🔵', 'Загрузка SIP-учётных данных...');
+    try {
+      const credentials = await getSipCredentials();
+      if (sipRegistered) {
+        return;
+      }
+      sipUsername.value = credentials.username;
+      await plugin.register(credentials);
+    } catch (error) {
+      if (!handleMissingApiKeyError(error)) {
+        setSipStatus('🔴', `Не удалось загрузить учётные данные SIP: ${describeError(error)}`);
+      }
+    }
+  }
 });
 
 pinClearButton.addEventListener('click', () => {
@@ -311,6 +334,6 @@ void init().catch((error) => {
     updateCallButton();
     return;
   }
-  setAlert(sipStatus, message, 'danger');
+  setSipStatus('🔴', message);
   updateCallButton();
 });
