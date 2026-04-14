@@ -14,7 +14,14 @@ export { StreamingPlugin } from './plugins/StreamingPlugin.ts';
 export type { StreamingPluginCallbacks } from './plugins/StreamingPlugin.ts';
 
 // Config
-export { getJanusConfig, getSipCredentials, getAccountInfo } from './config/settings.ts';
+export {
+  getJanusConfig,
+  getSipCredentials,
+  getAccountInfo,
+  getApiKey,
+  setApiKey,
+  clearApiKey,
+} from './config/settings.ts';
 export type { AppConfig, AccountInfo } from './config/settings.ts';
 
 // Utils

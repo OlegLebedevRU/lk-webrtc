@@ -80,23 +80,13 @@ export class MediaRenderer {
     this.renderEmptyState();
   }
 
-  private createItem(key: string, kind: string, label: string) {
+  private createItem(key: string, kind: string, _label: string) {
     if (this.items.size === 0) {
       this.container.innerHTML = '';
     }
 
     const column = document.createElement('div');
     column.className = 'col-12';
-
-    const card = document.createElement('div');
-    card.className = 'card h-100';
-
-    const header = document.createElement('div');
-    header.className = 'card-header';
-    header.textContent = label;
-
-    const body = document.createElement('div');
-    body.className = 'card-body';
 
     const element =
       kind === 'audio'
@@ -109,11 +99,13 @@ export class MediaRenderer {
 
     if (element instanceof HTMLVideoElement) {
       element.playsInline = true;
+      element.style.display = 'block';
+      element.style.maxHeight = '70vh';
+      element.style.objectFit = 'contain';
+      element.style.backgroundColor = '#000';
     }
 
-    body.appendChild(element);
-    card.append(header, body);
-    column.appendChild(card);
+    column.appendChild(element);
     this.container.appendChild(column);
 
     const item = {
