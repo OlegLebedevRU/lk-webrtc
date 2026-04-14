@@ -52,6 +52,7 @@ let inCall = false;
 let pendingIncomingJsep: JanusJsep | undefined = undefined;
 let pendingIncomingCaller = '';
 let defaultStreamId: number | null = null;
+let activeCallPeer = '';
 
 type BootstrapCollapseInstance = {
   show: () => void;
@@ -128,6 +129,7 @@ function hideCallWidget(): void {
   callWidget.style.display = 'none';
   pendingIncomingJsep = undefined;
   pendingIncomingCaller = '';
+  activeCallPeer = '';
 }
 
 function handleMissingApiKeyError(error: unknown): boolean {
@@ -225,6 +227,11 @@ async function init(): Promise<void> {
       setAlert(callStatus, 'Идет вызов...', 'info');
     },
     onIncomingCall: async (caller, jsep) => {
+      if (pendingIncomingCaller) {
+        sipPlugin?.decline();
+        setAlert(callStatus, 'Есть активный входящий вызов. Новый вызов отклонен.', 'warning');
+        return;
+      }
       pendingIncomingCaller = caller;
       pendingIncomingJsep = jsep;
       showCallWidget('incoming', caller);
@@ -243,7 +250,11 @@ async function init(): Promise<void> {
     onCallAccepted: () => {
       inCall = true;
       updateCallButton();
-      showCallWidget('active', pendingIncomingCaller);
+      const peer = activeCallPeer || pendingIncomingCaller;
+      if (!peer) {
+        return;
+      }
+      showCallWidget('active', peer);
       collapseStreams(false);
     },
     onCallHangup: (_code, reason) => {
@@ -374,17 +385,24 @@ callButton.addEventListener('click', async () => {
   }
 
   try {
+    activeCallPeer = uri;
     await sipPlugin.call(uri, false);
   } catch (error) {
+    activeCallPeer = '';
     setAlert(callStatus, describeError(error), 'danger');
   }
 });
 
 callAnswerButton.addEventListener('click', async () => {
   if (!sipPlugin) return;
+  const incomingPeer = pendingIncomingCaller;
+  const isOfferlessAnswer = !pendingIncomingJsep;
+  activeCallPeer = incomingPeer;
   try {
-    await sipPlugin.answer(pendingIncomingJsep, !pendingIncomingJsep, false);
-    showCallWidget('active', pendingIncomingCaller);
+    await sipPlugin.answer(pendingIncomingJsep, isOfferlessAnswer, false);
+    pendingIncomingJsep = undefined;
+    pendingIncomingCaller = '';
+    showCallWidget('active', activeCallPeer);
   } catch (error) {
     setAlert(callStatus, describeError(error), 'danger');
   }
