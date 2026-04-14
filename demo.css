@@ -72,12 +72,12 @@ a {
 	border-radius: 3px;
 }
 
-.divider {
+divider {
 	width: 100%;
 	text-align: center;
 }
 
-.divider hr {
+divider hr {
 	margin-left: auto;
 	margin-right: auto;
 	width: 45%;
@@ -148,4 +148,8 @@ pre {
 	30% {
 		color: #FFD700;
 	}
+}
+
+#call-widget {
+	box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.15) !important;
 }
