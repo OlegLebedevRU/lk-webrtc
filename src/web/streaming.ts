@@ -28,7 +28,6 @@ const pinSaveButton = queryRequired<HTMLButtonElement>('#pin-save');
 const pinClearButton = queryRequired<HTMLButtonElement>('#pin-clear');
 const pinStatus = queryRequired<HTMLElement>('#pin-status');
 const pinCollapse = queryRequired<HTMLElement>('#pin-collapse');
-sipStatusIcon.setAttribute('aria-label', sipStatusIcon.title);
 
 const streamRenderer = new MediaRenderer(
   queryRequired<HTMLElement>('#stream-media'),
