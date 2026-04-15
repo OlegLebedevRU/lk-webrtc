@@ -260,20 +260,36 @@ export class SipPlugin {
       return;
     }
 
-    const event = result.event as SipEvent | undefined;
+    const resultData = result as Record<string, unknown>;
+    const nestedData =
+      typeof resultData['result'] === 'object' && resultData['result'] !== null
+        ? (resultData['result'] as Record<string, unknown>)
+        : null;
+    const eventData = nestedData ?? resultData;
+    const event =
+      (eventData['event'] as SipEvent | undefined)
+      ?? (resultData['event'] as SipEvent | undefined);
     if (!event) return;
 
     switch (event) {
       case 'registered':
         this.registered = true;
-        this.callbacks.onRegistered?.(result.result?.username ?? '');
+        this.callbacks.onRegistered?.(
+          (eventData['username'] as string | undefined)
+          ?? (resultData['username'] as string | undefined)
+          ?? '',
+        );
         break;
 
       case 'registration_failed':
         this.registered = false;
         this.callbacks.onRegistrationFailed?.(
-          result.result?.code ?? 0,
-          result.result?.reason ?? 'Unknown error',
+          (eventData['code'] as number | undefined)
+          ?? (resultData['code'] as number | undefined)
+          ?? 0,
+          (eventData['reason'] as string | undefined)
+          ?? (resultData['reason'] as string | undefined)
+          ?? 'Unknown error',
         );
         break;
 
@@ -282,9 +298,18 @@ export class SipPlugin {
         break;
 
       case 'incomingcall': {
-        this.callId = result.result?.call_id ?? null;
+        this.callId =
+          (msg['call_id'] as string | undefined)
+          ?? (eventData['call_id'] as string | undefined)
+          ?? (resultData['call_id'] as string | undefined)
+          ?? null;
         this.masterId = null;
-        const caller = result.result?.caller ?? result.result?.username ?? '';
+        const caller =
+          (eventData['caller'] as string | undefined)
+          ?? (eventData['username'] as string | undefined)
+          ?? (resultData['caller'] as string | undefined)
+          ?? (resultData['username'] as string | undefined)
+          ?? '';
         this.callbacks.onIncomingCall?.(caller, jsep);
         break;
       }
@@ -297,7 +322,10 @@ export class SipPlugin {
         break;
 
       case 'accepted':
-        this.masterId = result.result?.master_id ?? null;
+        this.masterId =
+          (eventData['master_id'] as number | undefined)
+          ?? (resultData['master_id'] as number | undefined)
+          ?? null;
         if (jsep) {
           this.handle?.handleRemoteJsep({ jsep });
         }
@@ -308,14 +336,26 @@ export class SipPlugin {
         this.callId = null;
         this.masterId = null;
         this.callbacks.onCallHangup?.(
-          result.result?.code ?? 0,
-          result.result?.reason ?? '',
+          (eventData['code'] as number | undefined)
+          ?? (resultData['code'] as number | undefined)
+          ?? 0,
+          (eventData['reason'] as string | undefined)
+          ?? (resultData['reason'] as string | undefined)
+          ?? '',
         );
         break;
 
       case 'message': {
-        const content = result.result?.content ?? '';
-        const sender = result.result?.caller ?? result.result?.username ?? '';
+        const content =
+          (eventData['content'] as string | undefined)
+          ?? (resultData['content'] as string | undefined)
+          ?? '';
+        const sender =
+          (eventData['caller'] as string | undefined)
+          ?? (eventData['username'] as string | undefined)
+          ?? (resultData['caller'] as string | undefined)
+          ?? (resultData['username'] as string | undefined)
+          ?? '';
         this.callbacks.onMessage?.(content, sender);
         break;
       }
