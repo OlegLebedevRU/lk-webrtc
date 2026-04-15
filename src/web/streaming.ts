@@ -45,6 +45,14 @@ const streamRenderer = new MediaRenderer(
   'После запуска здесь появятся видео- и аудиотреки потока.',
 );
 
+const sipRemoteAudioStream = new MediaStream();
+const sipRemoteAudioElement = document.createElement('audio');
+sipRemoteAudioElement.autoplay = true;
+sipRemoteAudioElement.style.display = 'none';
+sipRemoteAudioElement.srcObject = sipRemoteAudioStream;
+let sipRemoteAudioMounted = false;
+let sipAudioUnloadHandlerRegistered = false;
+
 let streamingPlugin: StreamingPlugin | null = null;
 let sipPlugin: SipPlugin | null = null;
 let sipRegistered = false;
@@ -170,6 +178,52 @@ function updateCallButton(): void {
   setButtonState(callButton, inCall ? 'Завершить' : 'Позвонить', !sipRegistered && !inCall);
 }
 
+function updateSipRemoteAudioTrack(track: MediaStreamTrack, on: boolean): void {
+  if (track.kind !== 'audio') {
+    return;
+  }
+
+  const existingTrack = sipRemoteAudioStream.getTracks().find((item) => item.id === track.id);
+  if (on) {
+    if (!existingTrack) {
+      sipRemoteAudioStream.addTrack(track);
+    }
+    void sipRemoteAudioElement.play().catch((error: unknown) => {
+      // Playback may require explicit user interaction in some browsers.
+      console.debug('SIP remote audio autoplay blocked:', error);
+    });
+    return;
+  }
+
+  if (existingTrack) {
+    sipRemoteAudioStream.removeTrack(existingTrack);
+  }
+}
+
+function clearSipRemoteAudio(): void {
+  for (const track of sipRemoteAudioStream.getTracks()) {
+    sipRemoteAudioStream.removeTrack(track);
+    track.stop();
+  }
+}
+
+function ensureSipRemoteAudioElement(): void {
+  if (sipRemoteAudioMounted) {
+    return;
+  }
+  if (!document.body) {
+    throw new Error('Document body is not available for SIP audio initialization.');
+  }
+  document.body.appendChild(sipRemoteAudioElement);
+  sipRemoteAudioMounted = true;
+}
+
+const handleBeforeUnload = (): void => {
+  clearSipRemoteAudio();
+  sipRemoteAudioElement.remove();
+  sipRemoteAudioMounted = false;
+};
+
 function renderStreams(streams: StreamInfo[]): void {
   streamSelect.innerHTML = '';
 
@@ -203,6 +257,11 @@ function renderSelectedStreamMetadata(streams: StreamInfo[]): void {
 }
 
 async function init(): Promise<void> {
+  ensureSipRemoteAudioElement();
+  if (!sipAudioUnloadHandlerRegistered) {
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    sipAudioUnloadHandlerRegistered = true;
+  }
   setJanusStatus('🔵', 'Инициализация Janus...');
   setStreamStatus('🔵', 'Загрузка списка потоков...');
   setSipStatus('🔵', 'Регистрация SIP...');
@@ -284,6 +343,7 @@ async function init(): Promise<void> {
     onCallHangup: (_code, reason) => {
       inCall = false;
       updateCallButton();
+      clearSipRemoteAudio();
       hideCallWidget();
       collapseStreams(true);
       stopActiveStreamSafely();
@@ -292,12 +352,13 @@ async function init(): Promise<void> {
     onLocalTrack: () => {
       // Local SIP media display removed
     },
-    onRemoteTrack: () => {
-      // Remote SIP media display removed
+    onRemoteTrack: (track, _mid, on) => {
+      updateSipRemoteAudioTrack(track, on);
     },
     onCleanup: () => {
       inCall = false;
       updateCallButton();
+      clearSipRemoteAudio();
       hideCallWidget();
       collapseStreams(true);
       stopActiveStreamSafely();
@@ -422,6 +483,9 @@ callButton.addEventListener('click', async () => {
 
 callAnswerButton.addEventListener('click', async () => {
   if (!sipPlugin) return;
+  if (!pendingIncomingCaller && !pendingIncomingJsep) {
+    return;
+  }
   const incomingPeer = pendingIncomingCaller;
   const isOfferlessAnswer = !pendingIncomingJsep;
   activeCallPeer = incomingPeer;
@@ -438,6 +502,7 @@ callAnswerButton.addEventListener('click', async () => {
 callDeclineButton.addEventListener('click', () => {
   if (!sipPlugin) return;
   sipPlugin.decline();
+  clearSipRemoteAudio();
   hideCallWidget();
 });
 
@@ -449,6 +514,7 @@ callOpenButton.addEventListener('click', () => {
 callHangupButton.addEventListener('click', () => {
   if (!sipPlugin) return;
   sipPlugin.hangup();
+  clearSipRemoteAudio();
 });
 
 void init().catch((error) => {
