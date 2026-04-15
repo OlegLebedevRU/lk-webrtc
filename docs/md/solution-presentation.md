@@ -14,7 +14,7 @@
 
 ## 2. Компоненты системы
 
-- **siplite**: контроллер на объекте, интеграция SIP и IP-камеры.
+- **siplite**: контроллер на объекте, интеграция SIP и IP-камеры, управление замком.
 - **iot-rpc-rest-app**: RPC/EVENT ядро оркестрации и интеграции контроллеров.
 - **lk-leo4**: личный кабинет (администрирование, мониторинг, управление).
 - **Janus WebRTC Gateway**: медиа-шлюз для WebRTC и видеостриминга.
@@ -42,54 +42,99 @@ flowchart TB
 
 ---
 
-## 4. Логика голосового вызова (SIP)
+## 4. Doorbell-сценарий голосового вызова (входящий SIP от siplite)
 
 ```mermaid
 sequenceDiagram
-    participant U as Абонент (lk-webrtc/SIP-клиент)
+    participant D as Домофон/siplite
     participant A as Asterisk
-    participant S as siplite
+    participant W as lk-webrtc (или SIP-клиент)
     participant C as iot-rpc-rest-app
     participant L as lk-leo4
 
-    U->>A: SIP REGISTER / INVITE
-    A->>S: Маршрутизация вызова
-    S-->>A: SIP 200 OK / media params
-    A-->>U: Ответ вызова
-    S->>C: EVENT о состоянии вызова
-    C->>L: Публикация состояния в ЛК
+    D->>A: SIP INVITE (doorbell)
+    A->>W: Входящий вызов
+    W->>W: UI: «Принять / Отклонить»
+
+    alt Пользователь принял вызов
+        W-->>A: SIP 200 OK
+        A-->>D: SIP 200 OK
+        D->>C: EVENT call=accepted
+        C->>L: EVENT состояния вызова
+    else Пользователь отклонил вызов
+        W-->>A: SIP Decline (486 Busy Here)
+        A-->>D: SIP decline
+        D->>C: EVENT call=declined
+        C->>L: EVENT состояния вызова
+    end
+
+    D->>C: EVENT call=hangup/completed
+    C->>L: Финальный статус вызова
 ```
+
+### Состояния звонка в клиенте
+
+- `incoming` — входящий doorbell-вызов от `siplite`;
+- `accepted` — вызов принят пользователем;
+- `declined` — вызов отклонен пользователем;
+- `in_call` — активный разговор;
+- `hangup` — вызов завершен.
 
 ---
 
-## 5. Логика видеостриминга (WebRTC)
+## 5. Doorbell-сценарий видеостриминга (Janus/WebRTC)
 
 ```mermaid
 sequenceDiagram
-    participant Cam as IP-камера
-    participant S as siplite
+    participant Cam as Камера домофона
+    participant D as siplite
     participant J as Janus
     participant W as lk-webrtc
-    participant C as iot-rpc-rest-app
 
-    Cam->>S: RTSP/видео поток
-    S->>J: Публикация/проксирование потока
-    W->>J: Запрос на просмотр (WebRTC)
-    J-->>W: SDP/ICE + медиапоток
-    S->>C: EVENT доступности/ошибок потока
+    Cam->>D: RTSP/видео поток
+    D->>J: Публикация/проксирование потока
+    Note over D,W: Входящий вызов доставляется по SIP-контуру D->A->W (см. раздел 4 «Doorbell-сценарий голосового вызова»)
+    W->>J: Запрос на просмотр потока домофона
+    J-->>W: SDP/ICE + WebRTC media
+    W->>W: Показ видео в UI во время входящего/активного вызова
 ```
+
+Для `lk-webrtc` целевой UX: при входящем doorbell вызове запускать просмотр потока домофона по умолчанию, чтобы пользователь видел посетителя до ответа и во время разговора.
+Перед автозапуском потока рекомендуется проверять авторизацию пользователя и учитывать настройки приватности (например, запрет автопоказа видео без явного действия пользователя).
 
 ---
 
-## 6. Контур управления и событий
+## 6. Управление замком (команда из клиента в siplite)
+
+### 6.1 Управляющий контур
 
 ```mermaid
 flowchart LR
-    LK[lk-leo4] -->|REST/RPC команды| Core[iot-rpc-rest-app]
-    Core -->|RPC| Siplite[siplite]
-    Siplite -->|EVENT статусы| Core
-    Core -->|EVENT/REST| LK
+    W[lk-webrtc] -->|Команда unlock| L[lk-leo4 API]
+    L -->|REST/RPC| Core[iot-rpc-rest-app]
+    Core -->|RPC unlockDoor| S[siplite]
+    S -->|EVENT lock=opened/failed| Core
+    Core -->|EVENT| L
+    L -->|Статус операции| W
 ```
+
+### 6.2 SIP-контур в активном звонке (типовой вариант для домофона)
+
+```mermaid
+sequenceDiagram
+    participant W as lk-webrtc
+    participant A as Asterisk
+    participant D as siplite/домофон
+
+    W->>A: SIP INFO / DTMF (например, «1»)
+    A->>D: DTMF команда открытия
+    D-->>A: 200 OK
+    A-->>W: 200 OK
+```
+
+В `lk-webrtc` это отражается кнопкой UI «Открыть», которая отправляет управляющую команду на `siplite` (например, DTMF в активной SIP-сессии), после чего UI показывает подтверждение/ошибку операции.
+
+Рекомендуемая модель: `6.1` как основной enterprise-контур (аудит, ACL, журналирование), `6.2` как совместимый SIP-механизм для домофонов, где открытие замка реализовано через DTMF-команду в активном вызове.
 
 ---
 
@@ -100,14 +145,17 @@ flowchart LR
   - просмотр статусов и событий;
   - диагностика каналов связи.
 - **Абонент**:
-  - звонки через SIP-клиент или lk-webrtc;
-  - просмотр видеопотоков через lk-webrtc.
+  - принимает входящий doorbell вызов в `lk-webrtc`/SIP-клиенте;
+  - отвечает или отклоняет вызов;
+  - смотрит видеопоток с домофона;
+  - открывает замок из UI.
 
 ---
 
 ## 8. Преимущества архитектуры
 
 - Разделение сигнализации (**Asterisk**) и медиа (**Janus**).
+- Поддержка E2E doorbell-сценария: вызов + видео + управление замком.
 - Масштабируемость по контроллерам и клиентам.
 - Поддержка гибридного клиентского контура (SIP-клиенты + WebRTC).
 - Централизованное управление и мониторинг через RPC/EVENT ядро и ЛК.
