@@ -260,7 +260,7 @@ export class SipPlugin {
       return;
     }
 
-    const resultData = result as Record<string, unknown>;
+    const resultData = result as unknown as Record<string, unknown>;
     const nestedData =
       typeof resultData['result'] === 'object' && resultData['result'] !== null
         ? (resultData['result'] as Record<string, unknown>)
