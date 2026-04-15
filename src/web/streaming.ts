@@ -50,7 +50,8 @@ const sipRemoteAudioElement = document.createElement('audio');
 sipRemoteAudioElement.autoplay = true;
 sipRemoteAudioElement.style.display = 'none';
 sipRemoteAudioElement.srcObject = sipRemoteAudioStream;
-document.body.appendChild(sipRemoteAudioElement);
+let sipRemoteAudioMounted = false;
+let sipAudioUnloadHandlerRegistered = false;
 
 let streamingPlugin: StreamingPlugin | null = null;
 let sipPlugin: SipPlugin | null = null;
@@ -187,8 +188,9 @@ function updateSipRemoteAudioTrack(track: MediaStreamTrack, on: boolean): void {
     if (!existingTrack) {
       sipRemoteAudioStream.addTrack(track);
     }
-    void sipRemoteAudioElement.play().catch(() => {
+    void sipRemoteAudioElement.play().catch((error: unknown) => {
       // Playback may require explicit user interaction in some browsers.
+      console.debug('SIP remote audio autoplay blocked:', error);
     });
     return;
   }
@@ -204,6 +206,23 @@ function clearSipRemoteAudio(): void {
     track.stop();
   }
 }
+
+function ensureSipRemoteAudioElement(): void {
+  if (sipRemoteAudioMounted) {
+    return;
+  }
+  if (!document.body) {
+    throw new Error('Document body is not available for SIP audio initialization.');
+  }
+  document.body.appendChild(sipRemoteAudioElement);
+  sipRemoteAudioMounted = true;
+}
+
+const handleBeforeUnload = (): void => {
+  clearSipRemoteAudio();
+  sipRemoteAudioElement.remove();
+  sipRemoteAudioMounted = false;
+};
 
 function renderStreams(streams: StreamInfo[]): void {
   streamSelect.innerHTML = '';
@@ -238,6 +257,11 @@ function renderSelectedStreamMetadata(streams: StreamInfo[]): void {
 }
 
 async function init(): Promise<void> {
+  ensureSipRemoteAudioElement();
+  if (!sipAudioUnloadHandlerRegistered) {
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    sipAudioUnloadHandlerRegistered = true;
+  }
   setJanusStatus('🔵', 'Инициализация Janus...');
   setStreamStatus('🔵', 'Загрузка списка потоков...');
   setSipStatus('🔵', 'Регистрация SIP...');
